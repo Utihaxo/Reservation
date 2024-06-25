@@ -19,6 +19,28 @@ function timeToSlot(hour, minute) {
     return Math.floor((total_minutes - open_minutes) / min_time);
 }
 
+function checkAvailability(date_str, start_slot, end_slot, num_tracks) {
+    let availableTracks = [];
+    for (let track = 0; track < tracks_num; track++) {
+        const trackSlots = tracks_res[date_str][track];
+        if (trackSlots.slice(start_slot, end_slot).every(slot => slot === 0)) {
+            availableTracks.push(track);
+            if (availableTracks.length >= num_tracks) {
+                return availableTracks;
+            }
+        }
+    }
+    return [];
+}
+
+function reserveTracks(date_str, start_slot, end_slot, tracks) {
+    tracks.forEach(track => {
+        for (let slot = start_slot; slot < end_slot; slot++) {
+            tracks_res[date_str][track][slot] = 1;
+        }
+    });
+}
+
 function getRes(date_str, bgn_hour, bgn_minute, end_hour, end_minute, num_tracks) {
     const current_datetime = new Date();
     const reservation_datetime = new Date(date_str);
@@ -42,19 +64,11 @@ function getRes(date_str, bgn_hour, bgn_minute, end_hour, end_minute, num_tracks
 
         const start_slot = timeToSlot(bgn_hour, bgn_minute);
         const end_slot = timeToSlot(end_hour, end_minute);
-        let reservedTracks = [];
+        const availableTracks = checkAvailability(date_str, start_slot, end_slot, num_tracks);
 
-        for (let track = 0; track < tracks_num; track++) {
-            const trackSlots = tracks_res[date_str][track];
-            if (trackSlots.slice(start_slot, end_slot).every(slot => slot === 0)) {
-                for (let slot = start_slot; slot < end_slot; slot++) {
-                    trackSlots[slot] = 1;
-                }
-                reservedTracks.push(track + 1);
-                if (reservedTracks.length >= num_tracks) {
-                    return reservedTracks; // Return array of track numbers
-                }
-            }
+        if (availableTracks.length === num_tracks) {
+            reserveTracks(date_str, start_slot, end_slot, availableTracks);
+            return availableTracks.map(track => track + 1); // Return array of track numbers (1-based index)
         }
     }
     return [];
@@ -63,6 +77,7 @@ function getRes(date_str, bgn_hour, bgn_minute, end_hour, end_minute, num_tracks
 document.getElementById('reservation-form').addEventListener('submit', function(event) {
     event.preventDefault();
     
+    const name = document.getElementById('name').value;
     const date = document.getElementById('date').value;
     const bgn_hour = parseInt(document.getElementById('start-hour').value, 10);
     const bgn_minute = parseInt(document.getElementById('start-minute').value, 10);
