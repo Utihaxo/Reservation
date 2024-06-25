@@ -1,6 +1,6 @@
 const tracks_res = {};
 const tracks_num = 10;
-const min_time = 20; // conditions: min_time is int > 0 and min_time | 60
+const min_time = 5; // conditions: min_time is int > 0 and min_time | 60
 const open_hour = 8;
 const close_hour = 22;
 
